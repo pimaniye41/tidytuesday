@@ -1,0 +1,58 @@
+---
+title: "TidyTuesday Week 3 2023"
+output: html_notebook
+---
+# Alone dataset
+
+```{r,message=FALSE}
+install.packages("tidytuesdayR")
+library(tidytuesdayR)
+library(tidyverse)
+library(janitor)
+df_alone <- tidytuesdayR::tt_load("2023-01-24")
+```
+
+
+```{r}
+episodes <- df_alone$episodes
+survivalists <- df_alone$survivalists
+loadouts <- df_alone$loadouts
+seasons <- df_alone$seasons
+```
+
+```{r}
+aa <- expand_grid(days_lasted= 0:max(survivalists$days_lasted),
+            gender = unique(survivalists$gender)) %>% 
+  left_join(
+    survivalists %>% 
+      count(days_lasted,gender),
+    by = c("days_lasted","gender")
+  ) %>% 
+  left_join(
+    survivalists %>% 
+      count(gender, name = "N"),
+    by = "gender"
+  ) %>% 
+  group_by(gender)%>% 
+  mutate(n = replace_na(n,0),
+         n_lasted = N - cumsum(n),
+         p = n_lasted/N)
+
+```
+
+
+```{r}
+aa |>
+  ggplot(aes(days_lasted, p, colour = gender, fill = gender)) +
+  geom_line() +
+  labs(
+    x = "Days lasted",
+    y = "Proportion remaining",
+    colour = "Gender",
+    fill = "Gender",
+    title = "Survival curves",
+    subtitle = "There is some evidence that, on average, women tend to survive longer than men"
+  )
+```
+
+
